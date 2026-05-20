@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - deploy
+    paths:
+      - 'back-Despachos_SpringBoot/**'
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
@@ -28,29 +29,26 @@ jobs:
     - name: Build, Tag, and Push Image to ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ecr_repo_url_backend2
+        ECR_REPOSITORY: back-despachos
         IMAGE_TAG: latest
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    
     steps:
     - name: Deploy to AWS EC2 via SSH
       uses: appleboy/ssh-action@v0.1.10
       with:
         host: ${{ secrets.EC2_PUBLIC_IP }}
         username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
+        key: ${{ secrets.KEY_PEM }}
         script: |
           export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
           export AWS_REGION="us-east-1"
-          
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-          
           cd /home/ec2-user/app
           docker compose pull despachos
           docker compose up -d despachos

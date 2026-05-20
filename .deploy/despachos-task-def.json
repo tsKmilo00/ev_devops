@@ -1,0 +1,18 @@
+{
+  "family": "despachos-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "despachos",
+      "image": "IMAGE_PLACEHOLDER",
+      "portMappings": [ { "containerPort": 8081, "hostPort": 8081 } ],
+      "essential": true,
+      "environment": [
+        { "name": "SPRING_PROFILES_ACTIVE", "value": "h2" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "family": "front-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "front",
+      "image": "IMAGE_PLACEHOLDER",
+      "portMappings": [ { "containerPort": 4173, "hostPort": 4173 } ],
+      "essential": true,
+      "environment": []
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "family": "ventas-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "ventas",
+      "image": "IMAGE_PLACEHOLDER",
+      "portMappings": [ { "containerPort": 8080, "hostPort": 8080 } ],
+      "essential": true,
+      "environment": [
+        { "name": "SPRING_PROFILES_ACTIVE", "value": "h2" }
+      ]
+    }
+  ]
+}
