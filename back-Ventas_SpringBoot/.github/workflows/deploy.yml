@@ -1,0 +1,62 @@
+name: Deploy Backend Ventas
+
+on:
+  push:
+    branches:
+      - deploy  # <-- Se activa automáticamente cuando haces push a la rama deploy
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Configuración de credenciales temporales de AWS Academy
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Crítico para AWS Academy
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Construye la imagen usando tu Dockerfile y la sube a ECR
+    - name: Build, Tag, and Push Image to ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ecr_repo_url_backend
+        IMAGE_TAG: latest
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Se conecta por SSH a tu EC2 y refresca el contenedor de Ventas
+    - name: Deploy to AWS EC2 via SSH
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_PUBLIC_IP }}
+        username: ec2-user  # Cambiar a 'ubuntu' si tu máquina usa Ubuntu Server
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+          export AWS_REGION="us-east-1"
+          
+          # Autenticar Docker con AWS ECR dentro de la EC2
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+          
+          # Ir a donde guardaste tu docker-compose.yml en la EC2, descargar la nueva imagen y levantarla
+          cd /home/ec2-user/app
+          docker compose pull ventas
+          docker compose up -d ventas
+          docker image prune -f

@@ -1,0 +1,94 @@
+name: CI/CD Build and Deploy to ECR/ECS
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  FRONT_DIR: front_despacho
+  VENTAS_DIR: back-Ventas_SpringBoot/Springboot-API-REST
+  DESPACHOS_DIR: back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push front image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.FRONT_DIR }}
+          push: true
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_FRONT }}:latest
+
+      - name: Build and push ventas image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.VENTAS_DIR }}
+          file: ${{ env.VENTAS_DIR }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_VENTAS }}:latest
+
+      - name: Build and push despachos image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.DESPACHOS_DIR }}
+          file: ${{ env.DESPACHOS_DIR }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_DESPACHOS }}:latest
+
+      - name: Register and deploy ventas to ECS (example)
+        env:
+          CLUSTER: ${{ secrets.ECS_CLUSTER }}
+          SERVICE: ${{ secrets.ECS_SERVICE_VENTAS }}
+          TASK_FAMILY: ventas-task
+          IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_VENTAS }}:latest
+        run: |
+          # create a task definition by replacing IMAGE_PLACEHOLDER
+          sed -e "s|IMAGE_PLACEHOLDER|${IMAGE}|g" ./.deploy/ventas-task-def.json > /tmp/ventas-task.json
+          aws ecs register-task-definition --cli-input-json file:///tmp/ventas-task.json
+          aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --force-new-deployment || true
+
+      - name: Register and deploy despachos to ECS (example)
+        env:
+          CLUSTER: ${{ secrets.ECS_CLUSTER }}
+          SERVICE: ${{ secrets.ECS_SERVICE_DESPACHOS }}
+          TASK_FAMILY: despachos-task
+          IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_DESPACHOS }}:latest
+        run: |
+          sed -e "s|IMAGE_PLACEHOLDER|${IMAGE}|g" ./.deploy/despachos-task-def.json > /tmp/despachos-task.json
+          aws ecs register-task-definition --cli-input-json file:///tmp/despachos-task.json
+          aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --force-new-deployment || true
+
+      - name: (Optional) Deploy front to ECS
+        if: false
+        env:
+          CLUSTER: ${{ secrets.ECS_CLUSTER }}
+          SERVICE: ${{ secrets.ECS_SERVICE_FRONT }}
+          IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_FRONT }}:latest
+        run: |
+          sed -e "s|IMAGE_PLACEHOLDER|${IMAGE}|g" ./.deploy/front-task-def.json > /tmp/front-task.json
+          aws ecs register-task-definition --cli-input-json file:///tmp/front-task.json
+          aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --force-new-deployment || true
+
+  notify:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify
+        run: echo "Build and push finished. Review actions logs for deploy steps."
