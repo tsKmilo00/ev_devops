@@ -8,9 +8,9 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ventas_db
+      MYSQL_DATABASE: ev_devops
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 
@@ -51,7 +51,7 @@ services:
     container_name: front-despacho
     restart: always
     ports:
-      - "4173:4173"
+      - "4173:8080"
     depends_on:
       - ventas
       - despachos

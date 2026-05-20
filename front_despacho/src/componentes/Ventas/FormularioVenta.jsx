@@ -26,10 +26,11 @@ const FormularioVenta = () => {
             navigate('/ventas');
         } catch (error) {
             console.error("Error al crear venta", error);
+            const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: 'Hubo un problema al crear la venta. Revisa la consola.',
+                title: 'Error de Conexión o Datos',
+                text: 'Detalle: ' + errorMsg,
                 confirmButtonColor: '#4f46e5'
             });
         }
