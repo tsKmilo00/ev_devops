@@ -52,5 +52,3 @@ Una vez finalizado, puedes acceder a:
 - API Despachos: `http://localhost:8081`
 
 *Nota: Cualquier cambio o fix debe ser realizado mediante commits descriptivos y subidos (push) a la rama `deploy` para desencadenar el pipeline de producción.*
-
-
