@@ -7,6 +7,7 @@ on:
     paths:
       - 'front_despacho/**'
       - '.github/workflows/deploy-front.yml'
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
