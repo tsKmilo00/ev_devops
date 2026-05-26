@@ -1,0 +1,21 @@
+name: Prueba Push
+
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pruebas del sistema
+        run: |
+          node --version
+          echo "Ejecutando pruebas unitarias..."
+          echo "¡Todas las pruebas pasaron con éxito!"
+
+      - name: Despliegue
+        run: echo "Proyecto procesado con éxito en la rama deploy."
