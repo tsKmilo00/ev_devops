@@ -20,11 +20,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'proyecto semestral/front_despacho/package-lock.json'
+          cache-dependency-path: 'front_despacho/package-lock.json'
 
       - name: Instalar y Compilar Frontend
         run: |
-          cd "proyecto semestral/front_despacho"
+          cd "front_despacho"
           npm ci
           npm run build
 
@@ -35,9 +35,9 @@ jobs:
           username: 'ubuntu'
           key: ${{ secrets.AWS_SSH_KEY }}
           port: 22
-          source: "proyecto semestral/front_despacho/dist/*"
+          source: "front_despacho/dist/*"
           target: "/var/www/html"
-          strip_components: 3
+          strip_components: 2
 
       - name: Estado de Despliegue
         run: |
