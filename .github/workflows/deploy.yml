@@ -16,4 +16,4 @@ jobs:
 
       - name: Levantar Frontend
         run: |
-          echo "Frontend levantado"
+          echo "Frontend levantado y listo"
