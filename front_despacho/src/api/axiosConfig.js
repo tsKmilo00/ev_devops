@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const API_HOST = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+
 // Instancia para el backend de Ventas (puerto 8080)
 export const ventasApi = axios.create({
-    baseURL: 'http://localhost:8080/api/v1',
+    baseURL: `http://${API_HOST}:8080/api/v1`,
     headers: {
         'Content-Type': 'application/json'
     }
@@ -10,7 +12,7 @@ export const ventasApi = axios.create({
 
 // Instancia para el backend de Despachos (puerto 8081)
 export const despachosApi = axios.create({
-    baseURL: 'http://localhost:8081/api/v1',
+    baseURL: `http://${API_HOST}:8081/api/v1`,
     headers: {
         'Content-Type': 'application/json'
     }

@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - deploy
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -13,19 +15,16 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
-          cache-dependency-path: 'proyecto semestral/package-lock.json'
-
+          cache-dependency-path: 'proyecto semestral/front_despacho/package-lock.json'
 
       - name: Instalar y Compilar Frontend
         run: |
-          cd "proyecto semestral"
+          cd "proyecto semestral/front_despacho"
           npm ci
           npm run build
 
@@ -36,6 +35,6 @@ jobs:
           username: 'ubuntu'
           key: ${{ secrets.AWS_SSH_KEY }}
           port: 22
-          source: "proyecto semestral/dist/*"
+          source: "proyecto semestral/front_despacho/dist/*"
           target: "/var/www/html"
-          strip_components: 2
+          strip_components: 3
