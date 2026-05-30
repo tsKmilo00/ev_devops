@@ -1,0 +1,41 @@
+name: Deploy Frontend to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+          cache-dependency-path: 'proyecto semestral/package-lock.json'
+
+
+      - name: Instalar y Compilar Frontend
+        run: |
+          cd "proyecto semestral"
+          npm ci
+          npm run build
+
+      - name: Desplegar en AWS EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.IP_PUBLIC }}
+          username: 'ubuntu'
+          key: ${{ secrets.AWS_SSH_KEY }}
+          port: 22
+          source: "proyecto semestral/dist/*"
+          target: "/var/www/html"
+          strip_components: 2
